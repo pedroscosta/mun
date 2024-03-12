@@ -1,0 +1,22 @@
+{
+  "name": "mun",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "watch": "tsup ./src/test.ts --watch",
+    "test": "node ./dist/test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chevrotain": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.25",
+    "tsup": "^8.0.2",
+    "typescript": "^5.4.2"
+  }
+}
