@@ -1,3 +1,4 @@
+import { CstParser } from "chevrotain";
 import { LuaLexer } from "../lexer";
 import LuaParser from "./LuaParser";
 
@@ -18,3 +19,11 @@ export function parseInput(text: string) {
 }
 
 export const BaseLuaVisitor = parser.getBaseCstVisitorConstructor();
+
+type CreateMutable<Type> = {
+  [Property in keyof Type]: () => void;
+};
+
+type c = typeof BaseLuaVisitor;
+
+type a = Omit<LuaParser, keyof CstParser>;

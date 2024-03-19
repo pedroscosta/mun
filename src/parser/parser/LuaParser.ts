@@ -1,6 +1,16 @@
 import { CstParser } from "chevrotain";
 import { AllTokens } from "../lexer";
-import { Colon, Equals, Identifier, Integer, Semicolon } from "../lexer/tokens";
+import {
+  BinaryOperator,
+  Colon,
+  Comma,
+  Equals,
+  Identifier,
+  LParen,
+  NumberLiteral,
+  RParen,
+  Semicolon,
+} from "../lexer/tokens";
 
 export default class LuaParser extends CstParser {
   constructor() {
@@ -39,9 +49,50 @@ export default class LuaParser extends CstParser {
   });
 
   public variableDeclaration = this.RULE("variableDeclaration", () => {
-    this.SUBRULE(this.variableIdentifier);
-    this.CONSUME2(Equals);
-    this.CONSUME3(Integer);
+    this.AT_LEAST_ONE_SEP({
+      SEP: Comma,
+      DEF: () => {
+        this.SUBRULE(this.variableIdentifier);
+      },
+    });
+    this.CONSUME(Equals);
+    this.AT_LEAST_ONE_SEP2({
+      SEP: Comma,
+      DEF: () => {
+        this.SUBRULE(this.expression);
+      },
+    });
+  });
+
+  public expression = this.RULE("expression", () => {
+    this.OR([
+      {
+        ALT: () => {
+          this.SUBRULE(this.binaryOperation);
+        },
+      },
+    ]);
+  });
+
+  public binaryOperation = this.RULE("binaryOperation", () => {
+    this.SUBRULE(this.atomicExpression, { LABEL: "lhs" });
+    this.MANY(() => {
+      this.CONSUME(BinaryOperator);
+      this.SUBRULE(this.expression, { LABEL: "rhs" });
+    });
+  });
+
+  public atomicExpression = this.RULE("atomicExpression", () => {
+    this.OR([
+      { ALT: () => this.SUBRULE(this.parenthesisExpression) },
+      { ALT: () => this.CONSUME(NumberLiteral) },
+    ]);
+  });
+
+  public parenthesisExpression = this.RULE("parenthesisExpression", () => {
+    this.CONSUME(LParen);
+    this.SUBRULE(this.expression);
+    this.CONSUME(RParen);
   });
 
   // public localVariableDeclaration = this.RULE(

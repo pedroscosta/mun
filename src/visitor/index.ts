@@ -1,9 +1,23 @@
 import { CstNode } from "chevrotain";
 import { BaseLuaVisitor } from "../parser/parser";
+import {
+  AtomicExpressionCtx,
+  BinaryOperationCtx,
+  BinaryOperationNode,
+  DeclarationNode,
+  ExpressionCtx,
+  ExpressionNode,
+  IdentifierNode,
+  PrintableNode,
+  VariableDeclarationCtx,
+  VariableIdentifierCtx,
+} from "./types";
 
 type CstContext = CstNode | CstNode[];
 
 export class LuaVisitor extends BaseLuaVisitor {
+  private fileBuffer: string[][];
+
   constructor() {
     super();
     // The "validateVisitor" method is a helper utility which performs static analysis
@@ -12,9 +26,7 @@ export class LuaVisitor extends BaseLuaVisitor {
     this.fileBuffer = [];
   }
 
-  private fileBuffer: String[][];
-
-  public appendLineToFileBuffer(...lines: String[][]) {
+  public appendLineToFileBuffer(...lines: string[][]) {
     this.fileBuffer.push(...lines);
   }
 
@@ -22,61 +34,117 @@ export class LuaVisitor extends BaseLuaVisitor {
     return this.fileBuffer;
   }
 
+  public visit(ctx: CstContext | undefined): PrintableNode {
+    if (ctx === undefined) return { output: [] };
+
+    const visited = super.visit(ctx);
+
+    console.log(Array.isArray(ctx) ? ctx[0].name : ctx.name, visited);
+
+    return visited;
+  }
+
+  // TODO: Is this really necessary? Expressions can be written without being an explicit expression?
+  private visitExpression(ctx: CstContext | undefined): ExpressionNode {
+    return this.visit(ctx) as ExpressionNode;
+  }
+
+  ///////////////////////// Block
+
   public block(ctx: any) {
     ctx.statement?.map((statement) => {
-      const evaluatedStatement = this.visit(statement);
+      const evaluatedStatement = this.visit(statement) as DeclarationNode;
 
       this.appendLineToFileBuffer([
-        "--",
-        "evaluated types:",
-        ...evaluatedStatement[0].map((ev) => ev.type),
+        "-- evaluated types:",
+        Object.entries(evaluatedStatement.declaredVars)
+          .map(([k, v]) => k + ": " + v.type)
+          .join(", "),
       ]);
 
-      this.appendLineToFileBuffer(evaluatedStatement[1]);
+      this.appendLineToFileBuffer(evaluatedStatement.output);
     });
   }
 
-  public statement(ctx: any) {
-    const [declaredVars, lineBuffer] = this.visit(ctx.variableDeclaration);
+  ///////////////////////// Statement
 
-    return [declaredVars, lineBuffer];
+  public statement(ctx: any): DeclarationNode {
+    return this.visit(ctx.variableDeclaration) as DeclarationNode;
   }
 
-  public variableIdentifier(ctx: any) {
+  ///////////////////////// Variables
+
+  public variableIdentifier(ctx: VariableIdentifierCtx): IdentifierNode {
     return {
-      name: ctx.Identifier[0].image,
-      type: ctx.Identifier[1]?.image,
+      output: [ctx.Identifier[0].image],
+      type: ctx.Identifier[1]?.image ?? "any",
     };
   }
 
-  public variableDeclaration(ctx: any) {
-    const declaredVars: any[] = [];
+  public variableDeclaration(ctx: VariableDeclarationCtx): DeclarationNode {
+    const declaredVars: DeclarationNode["declaredVars"] = {};
 
-    let lineBuffer: String[] = ["="];
+    let output: string[] = ["="];
     let amt = 0;
 
-    const identifiers = ctx.variableIdentifier.map((idtf) => this.visit(idtf));
+    const identifiers = ctx.variableIdentifier.map(
+      (idtf) => this.visit(idtf) as IdentifierNode
+    );
 
     identifiers.map((idtf, i) => {
-      const curVar = {
-        ...idtf,
-        value: ctx.Integer[i].image,
-      };
+      const varName = idtf.output[0];
+      declaredVars[varName] = { type: idtf.type };
 
-      declaredVars.push(curVar);
+      if (amt > 0) output.push(",");
+      const varValue = this.visitExpression(ctx.expression[i]); // TODO: Check if types match
+      output.push(varValue.output[0]);
 
-      lineBuffer.push(curVar.value);
-      lineBuffer = [
-        ...lineBuffer.slice(0, amt),
-        curVar.name,
-        ...lineBuffer.slice(amt),
+      const identifierSlice = amt > 0 ? [",", varName] : [varName];
+      output = [
+        ...output.slice(0, amt),
+        ...identifierSlice,
+        ...output.slice(amt),
       ];
 
       amt++;
     });
 
-    console.log("variableDeclaration", declaredVars, lineBuffer);
-
-    return [declaredVars, lineBuffer];
+    return { declaredVars, output };
   }
+
+  public expression(ctx: ExpressionCtx): ExpressionNode {
+    if (ctx.binaryOperation !== undefined) {
+      const binaryOperation = this.binaryOperation(
+        ctx.binaryOperation[0].children
+      );
+
+      if (binaryOperation.operator === undefined) return binaryOperation.lhs;
+    }
+
+    return { output: [], type: "" };
+  }
+
+  public binaryOperation(ctx: BinaryOperationCtx): BinaryOperationNode {
+    const lhs = this.visitExpression(ctx.lhs);
+    const operator = ctx.BinaryOperator?.[0]?.image;
+    const rhs = this.visitExpression(ctx.rhs); // TODO: Map children
+
+    return {
+      lhs,
+      operator,
+      rhs,
+    };
+  }
+
+  public atomicExpression(ctx: AtomicExpressionCtx): ExpressionNode {
+    if (ctx.NumberLiteral !== undefined) {
+      const numberLiteral = ctx.NumberLiteral;
+
+      return { output: [numberLiteral[0].image.toString()], type: "number" };
+    }
+
+    return { output: [], type: "" };
+  }
+
+  public parenthesisExpression(ctx: any) {}
 }

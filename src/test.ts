@@ -1,12 +1,13 @@
 import { parseInput } from "./parser/parser";
+import { conditionalJoin } from "./utils/printingUtils";
 import { LuaVisitor } from "./visitor";
 
 import { writeFile } from "fs/promises";
 import { resolve } from "path";
 
 const code = `
-a: String = 1234
-b = 321
+a: String, b = 1234, 123
+c = 321
 `;
 
 // local function test(arg1)
@@ -35,7 +36,9 @@ try {
     resolve("./test.lua"),
     visitor
       .getFileBuffer()
-      .map((lineBuffer) => lineBuffer.join(" "))
+      .map((lineBuffer) =>
+        conditionalJoin(lineBuffer, " ", (prev, cur) => cur !== ",")
+      ) // TODO: Conditionally join with ' ' or '', commas don't get separated
       .join("\n")
   );
 } catch (err) {

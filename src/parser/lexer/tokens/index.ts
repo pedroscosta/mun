@@ -1,35 +1,58 @@
 import { createToken, Lexer } from "chevrotain";
 
-const Equals = createToken({ name: "Equals", pattern: /=/ });
+// Operators
+export const Equals = createToken({ name: "Equals", pattern: /=/ });
+export const BinaryOperator = createToken({
+  name: "BinaryOperator",
+  pattern: /\+/,
+});
 
-const LocalKeyword = createToken({ name: "LocalKeyword", pattern: /local/ });
+// Literals
+export const Literal = createToken({
+  name: "Literal",
+  pattern: Lexer.NA,
+});
 
-const Identifier = createToken({ name: "Identifier", pattern: /[a-zA-Z]\w*/ });
+export const NumberLiteral = createToken({
+  name: "NumberLiteral",
+  pattern: /0|[1-9]\d*/,
+  categories: Literal,
+});
 
-const Integer = createToken({ name: "Integer", pattern: /0|[1-9]\d*/ });
+export const LocalKeyword = createToken({
+  name: "LocalKeyword",
+  pattern: /local/,
+});
 
-const WhiteSpace = createToken({
+export const Identifier = createToken({
+  name: "Identifier",
+  pattern: /[a-zA-Z]\w*/,
+});
+
+// Generic Tokens
+
+export const WhiteSpace = createToken({
   name: "WhiteSpace",
   pattern: /\s+/,
   group: Lexer.SKIPPED,
 });
-
-const Semicolon = createToken({
+export const Semicolon = createToken({
   name: "Semicolon",
   pattern: /[;]+/,
 });
-
-const Colon = createToken({
+export const Comma = createToken({
+  name: "Comma",
+  pattern: /[,]+/,
+});
+export const Colon = createToken({
   name: "Colon",
   pattern: /[:]+/,
 });
-
-export {
-  Colon,
-  Equals,
-  Identifier,
-  Integer,
-  LocalKeyword,
-  Semicolon,
-  WhiteSpace,
-};
+export const LParen = createToken({
+  name: "LParen",
+  pattern: /\(/,
+});
+export const RParen = createToken({
+  name: "RParen",
+  pattern: /\)/,
+});
