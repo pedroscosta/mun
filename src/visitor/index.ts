@@ -1,5 +1,5 @@
-import { CstNode } from "chevrotain";
-import { BaseLuaVisitor } from "../parser/parser";
+import { CstNode } from 'chevrotain';
+import { BaseLuaVisitor } from '../parser/parser';
 import {
   AtomicExpressionCtx,
   BinaryOperationCtx,
@@ -11,7 +11,8 @@ import {
   PrintableNode,
   VariableDeclarationCtx,
   VariableIdentifierCtx,
-} from "./types";
+} from './types';
+import { assertTypeMatch } from './types/utils';
 
 type CstContext = CstNode | CstNode[];
 
@@ -56,10 +57,10 @@ export class LuaVisitor extends BaseLuaVisitor {
       const evaluatedStatement = this.visit(statement) as DeclarationNode;
 
       this.appendLineToFileBuffer([
-        "-- evaluated types:",
+        '-- evaluated types:',
         Object.entries(evaluatedStatement.declaredVars)
-          .map(([k, v]) => k + ": " + v.type)
-          .join(", "),
+          .map(([k, v]) => k + ': ' + v.type)
+          .join(', '),
       ]);
 
       this.appendLineToFileBuffer(evaluatedStatement.output);
@@ -77,34 +78,33 @@ export class LuaVisitor extends BaseLuaVisitor {
   public variableIdentifier(ctx: VariableIdentifierCtx): IdentifierNode {
     return {
       output: [ctx.Identifier[0].image],
-      type: ctx.Identifier[1]?.image ?? "any",
+      type: ctx.Identifier[1]?.image ?? 'any',
     };
   }
 
   public variableDeclaration(ctx: VariableDeclarationCtx): DeclarationNode {
-    const declaredVars: DeclarationNode["declaredVars"] = {};
+    const declaredVars: DeclarationNode['declaredVars'] = {};
 
-    let output: string[] = ["="];
+    let output: string[] = ['='];
     let amt = 0;
 
-    const identifiers = ctx.variableIdentifier.map(
-      (idtf) => this.visit(idtf) as IdentifierNode
-    );
+    const identifiers = ctx.variableIdentifier.map((idtf) => this.visit(idtf) as IdentifierNode);
 
     identifiers.map((idtf, i) => {
       const varName = idtf.output[0];
-      declaredVars[varName] = { type: idtf.type };
 
-      if (amt > 0) output.push(",");
+      if (amt > 0) output.push(',');
       const varValue = this.visitExpression(ctx.expression[i]); // TODO: Check if types match
       output.push(varValue.output[0]);
 
-      const identifierSlice = amt > 0 ? [",", varName] : [varName];
-      output = [
-        ...output.slice(0, amt),
-        ...identifierSlice,
-        ...output.slice(amt),
-      ];
+      assertTypeMatch(idtf.type, varValue.type);
+
+      declaredVars[varName] = {
+        type: idtf.type !== 'any' ? idtf.type : varValue.type,
+      };
+
+      const identifierSlice = amt > 0 ? [',', varName] : [varName];
+      output = [...output.slice(0, amt), ...identifierSlice, ...output.slice(amt)];
 
       amt++;
     });
@@ -114,14 +114,12 @@ export class LuaVisitor extends BaseLuaVisitor {
 
   public expression(ctx: ExpressionCtx): ExpressionNode {
     if (ctx.binaryOperation !== undefined) {
-      const binaryOperation = this.binaryOperation(
-        ctx.binaryOperation[0].children
-      );
+      const binaryOperation = this.binaryOperation(ctx.binaryOperation[0].children);
 
       if (binaryOperation.operator === undefined) return binaryOperation.lhs;
     }
 
-    return { output: [], type: "" };
+    return { output: [], type: '' };
   }
 
   public binaryOperation(ctx: BinaryOperationCtx): BinaryOperationNode {
@@ -140,10 +138,10 @@ export class LuaVisitor extends BaseLuaVisitor {
     if (ctx.NumberLiteral !== undefined) {
       const numberLiteral = ctx.NumberLiteral;
 
-      return { output: [numberLiteral[0].image.toString()], type: "number" };
+      return { output: [numberLiteral[0].image.toString()], type: 'number' };
     }
 
-    return { output: [], type: "" };
+    return { output: [], type: '' };
   }
 
   public parenthesisExpression(ctx: any) {}

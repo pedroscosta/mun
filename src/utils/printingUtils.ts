@@ -1,7 +1,7 @@
 export const conditionalJoin = (
   input: string[],
   separator: string,
-  conditional: (prev: string, cur: string) => boolean
+  conditional: (prev: string, cur: string) => boolean,
 ): string => {
   let output = input[0];
   let prev = output;

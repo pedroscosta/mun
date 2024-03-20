@@ -1,4 +1,4 @@
-import { CstNode, IToken } from "chevrotain";
+import { CstNode, IToken } from 'chevrotain';
 
 export type TypedNode = {
   type: string;
@@ -28,7 +28,7 @@ export type VariableIdentifierCtx = {
 };
 
 export type VariableIdentifierCstNode = CstNode & {
-  name: "variableIdentifier";
+  name: 'variableIdentifier';
   children: VariableIdentifierCtx;
 };
 
@@ -39,7 +39,7 @@ export type VariableDeclarationCtx = {
 };
 
 export type VariableDeclarationCstNode = CstNode & {
-  name: "variableDeclaration";
+  name: 'variableDeclaration';
   children: VariableIdentifierCtx;
 };
 
@@ -50,7 +50,7 @@ export type ParenthesisExpressionCtx = {
 };
 
 export type ParenthesisExpressionCstNode = CstNode & {
-  name: "parenthesisExpression";
+  name: 'parenthesisExpression';
   children: ParenthesisExpressionCtx;
 };
 
@@ -59,7 +59,7 @@ export type ExpressionCtx = {
 };
 
 export type ExpressionCstNode = CstNode & {
-  name: "expression";
+  name: 'expression';
   children: ExpressionCtx;
 };
 
@@ -69,7 +69,7 @@ export type AtomicExpressionCtx = {
 };
 
 export type AtomicExpressionCstNode = CstNode & {
-  name: "atomicExpression";
+  name: 'atomicExpression';
   children: AtomicExpressionCtx;
 };
 
@@ -80,6 +80,6 @@ export type BinaryOperationCtx = {
 };
 
 export type BinaryOperationCstNode = CstNode & {
-  name: "binaryOperator";
+  name: 'binaryOperator';
   children: BinaryOperationCtx;
 };

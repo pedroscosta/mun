@@ -1,5 +1,5 @@
-import { CstParser } from "chevrotain";
-import { AllTokens } from "../lexer";
+import { CstParser } from 'chevrotain';
+import { AllTokens } from '../lexer';
 import {
   BinaryOperator,
   Colon,
@@ -10,7 +10,7 @@ import {
   NumberLiteral,
   RParen,
   Semicolon,
-} from "../lexer/tokens";
+} from '../lexer/tokens';
 
 export default class LuaParser extends CstParser {
   constructor() {
@@ -18,14 +18,14 @@ export default class LuaParser extends CstParser {
     this.performSelfAnalysis();
   }
 
-  public block = this.RULE("block", () => {
+  public block = this.RULE('block', () => {
     this.MANY(() => {
       this.SUBRULE(this.statement);
       // TODO Add retStat
     });
   });
 
-  public statement = this.RULE("statement", () => {
+  public statement = this.RULE('statement', () => {
     this.OR([
       {
         ALT: () => {
@@ -40,7 +40,7 @@ export default class LuaParser extends CstParser {
     ]);
   });
 
-  public variableIdentifier = this.RULE("variableIdentifier", () => {
+  public variableIdentifier = this.RULE('variableIdentifier', () => {
     this.CONSUME(Identifier);
     this.OPTION(() => {
       this.CONSUME1(Colon);
@@ -48,7 +48,7 @@ export default class LuaParser extends CstParser {
     });
   });
 
-  public variableDeclaration = this.RULE("variableDeclaration", () => {
+  public variableDeclaration = this.RULE('variableDeclaration', () => {
     this.AT_LEAST_ONE_SEP({
       SEP: Comma,
       DEF: () => {
@@ -64,7 +64,7 @@ export default class LuaParser extends CstParser {
     });
   });
 
-  public expression = this.RULE("expression", () => {
+  public expression = this.RULE('expression', () => {
     this.OR([
       {
         ALT: () => {
@@ -74,22 +74,22 @@ export default class LuaParser extends CstParser {
     ]);
   });
 
-  public binaryOperation = this.RULE("binaryOperation", () => {
-    this.SUBRULE(this.atomicExpression, { LABEL: "lhs" });
+  public binaryOperation = this.RULE('binaryOperation', () => {
+    this.SUBRULE(this.atomicExpression, { LABEL: 'lhs' });
     this.MANY(() => {
       this.CONSUME(BinaryOperator);
-      this.SUBRULE(this.expression, { LABEL: "rhs" });
+      this.SUBRULE(this.expression, { LABEL: 'rhs' });
     });
   });
 
-  public atomicExpression = this.RULE("atomicExpression", () => {
+  public atomicExpression = this.RULE('atomicExpression', () => {
     this.OR([
       { ALT: () => this.SUBRULE(this.parenthesisExpression) },
       { ALT: () => this.CONSUME(NumberLiteral) },
     ]);
   });
 
-  public parenthesisExpression = this.RULE("parenthesisExpression", () => {
+  public parenthesisExpression = this.RULE('parenthesisExpression', () => {
     this.CONSUME(LParen);
     this.SUBRULE(this.expression);
     this.CONSUME(RParen);

@@ -1,4 +1,4 @@
-import { Lexer } from "chevrotain";
+import { Lexer } from 'chevrotain';
 import {
   BinaryOperator,
   Colon,
@@ -11,7 +11,7 @@ import {
   RParen,
   Semicolon,
   WhiteSpace,
-} from "./tokens/index.js";
+} from './tokens/index.js';
 
 export const AllTokens = [
   // Generic tokens

@@ -1,6 +1,6 @@
-import { CstParser } from "chevrotain";
-import { LuaLexer } from "../lexer";
-import LuaParser from "./LuaParser";
+import { CstParser } from 'chevrotain';
+import { LuaLexer } from '../lexer';
+import LuaParser from './LuaParser';
 
 export const parser = new LuaParser();
 
@@ -12,7 +12,7 @@ export function parseInput(text: string) {
 
   if (parser.errors.length > 0) {
     console.error(parser.errors);
-    throw new Error("sad sad panda, Parsing errors detected");
+    throw new Error('sad sad panda, Parsing errors detected');
   }
 
   return output;
