@@ -1,12 +1,12 @@
 import { parseInput } from './parser/parser';
 import { conditionalJoin } from './utils/printingUtils';
-import { LuaVisitor } from './visitor';
+import { MunBlockVisitor } from './visitor';
 
 import { writeFile } from 'fs/promises';
 import { resolve } from 'path';
 
 const code = `
-a: number, b = 1234
+a: string, b = 123
 c = 321
 `;
 
@@ -18,7 +18,7 @@ const parseResult = parseInput(code);
 
 console.log('-------');
 
-const visitor = new LuaVisitor();
+const visitor = new MunBlockVisitor();
 const cst = visitor.visit(parseResult);
 
 try {

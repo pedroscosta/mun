@@ -12,19 +12,23 @@ import {
   VariableDeclarationCtx,
   VariableIdentifierCtx,
 } from './types';
-import { assertTypeMatch } from './types/utils';
+import { defaultTypes } from './typings';
+import { assertTypeMatch } from './typings/utils';
+import { isNodeEmpty } from './utils/nodeUtils';
 
 type CstContext = CstNode | CstNode[];
 
-export class LuaVisitor extends BaseLuaVisitor {
+export class MunBlockVisitor extends BaseLuaVisitor {
   private fileBuffer: string[][];
+  private types: typeof defaultTypes;
 
-  constructor() {
+  constructor(types = defaultTypes) {
     super();
     // The "validateVisitor" method is a helper utility which performs static analysis
     // to detect missing or redundant visitor methods
     this.validateVisitor();
     this.fileBuffer = [];
+    this.types = types;
   }
 
   public appendLineToFileBuffer(...lines: string[][]) {
@@ -59,7 +63,7 @@ export class LuaVisitor extends BaseLuaVisitor {
       this.appendLineToFileBuffer([
         '-- evaluated types:',
         Object.entries(evaluatedStatement.declaredVars)
-          .map(([k, v]) => k + ': ' + v.type)
+          .map(([k, v]) => k + ': ' + v.type.name)
           .join(', '),
       ]);
 
@@ -78,7 +82,7 @@ export class LuaVisitor extends BaseLuaVisitor {
   public variableIdentifier(ctx: VariableIdentifierCtx): IdentifierNode {
     return {
       output: [ctx.Identifier[0].image],
-      type: ctx.Identifier[1]?.image ?? 'any',
+      type: this.types[ctx.Identifier[1]?.image] ?? this.types.any,
     };
   }
 
@@ -93,14 +97,17 @@ export class LuaVisitor extends BaseLuaVisitor {
     identifiers.map((idtf, i) => {
       const varName = idtf.output[0];
 
-      if (amt > 0) output.push(',');
-      const varValue = this.visitExpression(ctx.expression[i]); // TODO: Check if types match
-      output.push(varValue.output[0]);
+      const varValue = this.visitExpression(ctx.expression[i]);
 
-      assertTypeMatch(idtf.type, varValue.type);
+      if (!isNodeEmpty(varValue)) {
+        if (amt > 0) output.push(',');
+        output.push(varValue.output[0]);
+
+        assertTypeMatch(idtf.type, varValue.type);
+      }
 
       declaredVars[varName] = {
-        type: idtf.type !== 'any' ? idtf.type : varValue.type,
+        type: !this.types.any.equals(idtf.type) ? idtf.type : varValue?.type ?? this.types.any,
       };
 
       const identifierSlice = amt > 0 ? [',', varName] : [varName];
@@ -119,7 +126,7 @@ export class LuaVisitor extends BaseLuaVisitor {
       if (binaryOperation.operator === undefined) return binaryOperation.lhs;
     }
 
-    return { output: [], type: '' };
+    return { output: [], type: this.types.any };
   }
 
   public binaryOperation(ctx: BinaryOperationCtx): BinaryOperationNode {
@@ -138,10 +145,10 @@ export class LuaVisitor extends BaseLuaVisitor {
     if (ctx.NumberLiteral !== undefined) {
       const numberLiteral = ctx.NumberLiteral;
 
-      return { output: [numberLiteral[0].image.toString()], type: 'number' };
+      return { output: [numberLiteral[0].image.toString()], type: this.types.number };
     }
 
-    return { output: [], type: '' };
+    return { output: [], type: this.types.any };
   }
 
   public parenthesisExpression(ctx: any) {}

@@ -1,7 +1,8 @@
 import { CstNode, IToken } from 'chevrotain';
+import MunType from './typings/MunType';
 
 export type TypedNode = {
-  type: string;
+  type: MunType;
 };
 
 export type PrintableNode = {
